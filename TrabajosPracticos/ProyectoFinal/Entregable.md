@@ -18,9 +18,9 @@ Es un sistema de reservas para una empresa que se encarga de hacer experiencias 
 
 ---
 
-## SPEC
+### SPEC
 
-### Descripcion del sistema
+#### Descripcion del sistema
 
 El proyecto consiste en desarrollar una inteligencia artificial conversacional para una empresa dedicada a la creación y comercialización de experiencias inmersivas basadas en películas y series icónicas.
 
@@ -28,13 +28,13 @@ La IA funcionará como un asistente virtual que permitirá a los usuarios consul
 
 Además, el sistema contará con un programa de membresías que ofrecerá descuentos mensuales, promociones y combos exclusivos de merchandising y experiencias.
 
-### Objetivo
+#### Objetivo
 
 Desarrollar un sistema inteligente que automatice y facilite el proceso de reservas, compras y consultas de los clientes, proporcionando una atención personalizada, rápida y disponible en todo momento.
 
 El sistema deberá centralizar la gestión de las experiencias, las sedes, los horarios, las reservas, los productos y las membresías.
 
-### Usuarios
+#### Usuarios
 
 * Visitante: puede consultar las experiencias, sedes, horarios, precios y productos disponibles.
 
@@ -44,9 +44,9 @@ El sistema deberá centralizar la gestión de las experiencias, las sedes, los h
 
 * Administrador: gestiona las sedes, experiencias, horarios, reservas, productos, promociones y membresías.
 
-### Funciones principales
+#### Funciones principales
 
-#### Atencion mediante IA
+##### Atencion mediante IA
 
 La IA será el principal medio de interacción entre los clientes y el sistema.
 
@@ -70,7 +70,7 @@ Deberá poder:
 
 * Derivar consultas complejas a un administrador o agente humano.
 
-#### Gestion de sedes
+##### Gestion de sedes
 
 La empresa contará con distintas sedes, cada una con sus propias experiencias y disponibilidad.
 
@@ -88,7 +88,7 @@ El sistema permitirá:
 
 * Informar posibles restricciones de edad, capacidad o accesibilidad.
 
-#### Gestion de experiencias
+##### Gestion de experiencias
 
 Cada experiencia estará basada en una película o serie icónica y contará con características particulares.
 
@@ -110,4 +110,4 @@ El sistema deberá permitir:
 
 * Recomendar experiencias relacionadas.
 
-#### Sistema de reservas
+##### Sistema de reservas
