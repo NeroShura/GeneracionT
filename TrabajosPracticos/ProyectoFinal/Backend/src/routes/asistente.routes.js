@@ -1,6 +1,7 @@
 
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
+import { verificarToken } from "../middleware/auth.js";
 import { responderAsistente } from "../services/asistente.service.js";
 
 const router = Router();
@@ -26,9 +27,25 @@ router.post("/", limiteAsistente, async (req, res, next) => {
             });
         }
 
-        const respuesta = await responderAsistente(mensaje.trim());
+        let idUsuario = null;
+
+        const authorization = req.headers.authorization;
+
+        if (authorization) {
+            verificarToken(req, res, () => {
+                idUsuario = req.usuario.id;
+            });
+
+            if (!idUsuario) return;
+        }
+
+        const respuesta = await responderAsistente(
+            mensaje.trim(),
+            idUsuario
+        );
 
         res.json({ respuesta });
+
     } catch (error) {
         next(error);
     }
