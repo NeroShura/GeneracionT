@@ -69,6 +69,12 @@ app.use((req, res) => {
 app.use((error, req, res, next) => {
     console.error(error);
 
+    if (error.type === "entity.parse.failed") {
+        return res.status(400).json({
+            error: "El JSON enviado no es válido."
+        });
+    }
+
     if (error.code === "ER_DUP_ENTRY") {
         return res.status(409).json({
             error: "El registro ya existe."
