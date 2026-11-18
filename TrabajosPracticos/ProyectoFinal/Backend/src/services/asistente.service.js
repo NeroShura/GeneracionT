@@ -6,8 +6,8 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
 });
 
-export async function responderAsistente(mensaje) {
-
+export async function responderAsistente(mensaje, idUsuario = null) {
+    
     const [experiencias] = await pool.execute(`
         SELECT
             e.nombre,
@@ -129,15 +129,15 @@ export async function responderAsistente(mensaje) {
         )
     `);
 
-    const contexto = {
-        experiencias,
-        horarios,
-        membresias,
-        beneficios,
-        promociones,
-        combos
-    };
-
+const contexto = {
+    experiencias,
+    horarios,
+    membresias,
+    beneficios,
+    promociones,
+    combos,
+    informacionSocio
+};
     const response = await openai.responses.create({
         model: process.env.OPENAI_MODEL,
 
@@ -194,3 +194,56 @@ ${mensaje}
     return response.output_text ||
         "No pude generar una respuesta en este momento. Intentá nuevamente.";
 }
+
+
+let informacionSocio = null;
+
+if (idUsuario) {
+    const [suscripciones] = await pool.execute(`
+        SELECT
+            s.id_suscripcion,
+            s.estado,
+            s.fecha_inicio,
+            s.fecha_vencimiento,
+            m.nombre AS membresia
+        FROM suscripciones s
+        INNER JOIN membresias m
+            ON m.id_membresia = s.id_membresia
+        WHERE s.id_usuario = ?
+        AND s.estado = 'activa'
+        AND s.fecha_inicio <= NOW()
+        AND s.fecha_vencimiento >= NOW()
+        ORDER BY s.fecha_vencimiento DESC
+        LIMIT 1
+    `, [idUsuario]);
+
+    if (suscripciones.length > 0) {
+        const suscripcion = suscripciones[0];
+
+        const [beneficiosSocio] = await pool.execute(`
+            SELECT
+                b.nombre,
+                b.descripcion,
+                b.tipo_beneficio,
+                b.valor
+            FROM suscripciones s
+            INNER JOIN membresia_beneficios mb
+                ON mb.id_membresia = s.id_membresia
+            INNER JOIN beneficios b
+                ON b.id_beneficio = mb.id_beneficio
+            WHERE s.id_suscripcion = ?
+            AND b.estado = 'activo'
+        `, [suscripcion.id_suscripcion]);
+
+        informacionSocio = {
+            suscripcion,
+            beneficios: beneficiosSocio
+        };
+    } else {
+        informacionSocio = {
+            tieneMembresiaActiva: false,
+            mensaje: "El usuario no tiene una membresía activa."
+        };
+    }
+}
+
