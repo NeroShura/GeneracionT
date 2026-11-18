@@ -3,6 +3,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import pool from "../config/database.js";
+import { verificarToken } from "../middleware/auth.js";
 
 const router = Router();
 
@@ -125,5 +126,74 @@ router.post("/login", async (req, res, next) => {
         next(error);
     }
 });
+
+router.get("/perfil", verificarToken, async (req, res, next) => {
+    try {
+        const [suscripciones] = await pool.execute(
+            `SELECT
+                su.id_suscripcion,
+                su.fecha_inicio,
+                su.fecha_vencimiento,
+                m.nombre AS membresia
+            FROM suscripciones su
+            INNER JOIN membresias m
+                ON m.id_membresia = su.id_membresia
+            WHERE su.id_usuario = ?
+                AND su.estado = 'activa'
+                AND su.fecha_inicio <= NOW(3)
+                AND su.fecha_vencimiento > NOW(3)
+                AND m.estado = 'activa'
+            ORDER BY su.fecha_vencimiento DESC
+            LIMIT 1`,
+            [req.usuario.id]
+        );
+
+        let membresia = null;
+
+        if (suscripciones.length > 0) {
+            const suscripcion = suscripciones[0];
+
+            const [beneficios] = await pool.execute(
+                `SELECT
+                    b.nombre,
+                    b.descripcion,
+                    b.tipo_beneficio,
+                    b.valor
+                FROM membresia_beneficios mb
+                INNER JOIN beneficios b
+                    ON b.id_beneficio = mb.id_beneficio
+                WHERE mb.id_membresia = (
+                    SELECT id_membresia
+                    FROM suscripciones
+                    WHERE id_suscripcion = ?
+                )
+                AND b.estado = 'activo'`,
+                [suscripcion.id_suscripcion]
+            );
+
+            membresia = {
+                nombre: suscripcion.membresia,
+                fechaInicio: suscripcion.fecha_inicio,
+                fechaVencimiento: suscripcion.fecha_vencimiento,
+                beneficios
+            };
+        }
+
+        res.json({
+            usuario: {
+                id: req.usuario.id,
+                nombre: req.usuario.nombre,
+                apellido: req.usuario.apellido,
+                email: req.usuario.email
+            },
+            esSocio: membresia !== null,
+            membresia
+        });
+
+    } catch (error) {
+        next(error);
+    }
+});
+
 
 export default router;
