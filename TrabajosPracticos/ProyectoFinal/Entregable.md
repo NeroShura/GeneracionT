@@ -12,6 +12,12 @@ Realizar una IA desde cero abarcando todo lo visto durante el curso
 
 ---
 
+## Repositorio
+
+https://github.com/NeroShura/GeneracionT/tree/main/TrabajosPracticos/ProyectoFinal
+
+---
+
 ## Reservas de experiencias inmersivas
 
 Es un sistema de reservas para una empresa que se encarga de hacer experiencias innmersivas de diferentes tematicas basadas en peliculas y series iconicas, en esta se reservara el horario, la experiencia(hay distintas sedes con experiencias distintas), merch de las experiencias, la reserva para experiencias futuras o exclusivas y en caso de ser socio tambien habra descuentos en experiencias todas los meses y combos con merch de la misma
