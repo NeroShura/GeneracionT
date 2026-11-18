@@ -1,4 +1,6 @@
+
 const API_URL = 'http://localhost:3000/api/asistente';
+const TOKEN_KEY = 'umbral_token';
 
 const menuToggle = document.querySelector('#menuToggle');
 const mainNav = document.querySelector('#mainNav');
@@ -9,12 +11,15 @@ const chatPanel = document.querySelector('#chatPanel');
 const chatMessages = document.querySelector('#chatMessages');
 const chatForm = document.querySelector('#chatForm');
 const chatInput = document.querySelector('#chatInput');
+const aiLauncher = document.querySelector('#aiLauncher');
+const closeChatButton = document.querySelector('#closeChat');
 const chatSuggestions = document.querySelectorAll('.chat-suggestions button');
 
 let isSendingMessage = false;
 
 menuToggle.addEventListener('click', () => {
     const isOpen = mainNav.classList.toggle('open');
+
     menuToggle.setAttribute('aria-expanded', String(isOpen));
 });
 
@@ -102,6 +107,7 @@ reservationForm.addEventListener('submit', event => {
 function openChat() {
     chatPanel.classList.add('open');
     chatPanel.setAttribute('aria-hidden', 'false');
+
     chatInput.focus();
 }
 
@@ -110,8 +116,8 @@ function closeChat() {
     chatPanel.setAttribute('aria-hidden', 'true');
 }
 
-document.querySelector('#aiLauncher').addEventListener('click', openChat);
-document.querySelector('#closeChat').addEventListener('click', closeChat);
+aiLauncher.addEventListener('click', openChat);
+closeChatButton.addEventListener('click', closeChat);
 
 function addMessage(message, type) {
     const element = document.createElement('div');
@@ -161,10 +167,15 @@ async function sendChatMessage(message) {
     setChatLoading(true);
 
     try {
+        const token = localStorage.getItem(TOKEN_KEY);
+
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                ...(token ? {
+                    Authorization: `Bearer ${token}`
+                } : {})
             },
             body: JSON.stringify({
                 mensaje: cleanMessage
@@ -174,13 +185,22 @@ async function sendChatMessage(message) {
         const data = await response.json();
 
         if (!response.ok) {
+            if (response.status === 401 && token) {
+                localStorage.removeItem(TOKEN_KEY);
+            }
+
             throw new Error(
                 data.error || 'No se pudo procesar tu consulta.'
             );
         }
 
-        if (typeof data.respuesta !== 'string' || !data.respuesta.trim()) {
-            throw new Error('El asistente no devolvió una respuesta válida.');
+        if (
+            typeof data.respuesta !== 'string' ||
+            !data.respuesta.trim()
+        ) {
+            throw new Error(
+                'El asistente no devolvió una respuesta válida.'
+            );
         }
 
         loadingMessage.textContent = data.respuesta;
@@ -189,10 +209,13 @@ async function sendChatMessage(message) {
         console.error('Error al comunicarse con Umbral:', error);
 
         loadingMessage.textContent =
-            'No pude comunicarme con el asistente en este momento. Verificá que el servidor esté funcionando e intentá nuevamente.';
+            error.message === 'Failed to fetch'
+                ? 'No pude conectarme con Umbral. Verificá que el servidor esté funcionando e intentá nuevamente.'
+                : error.message || 'Ocurrió un error al procesar tu consulta.';
 
     } finally {
         setChatLoading(false);
+
         chatInput.focus();
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
@@ -201,9 +224,13 @@ async function sendChatMessage(message) {
 chatForm.addEventListener('submit', event => {
     event.preventDefault();
 
-    const message = chatInput.value;
+    if (isSendingMessage) {
+        return;
+    }
 
-    if (!message.trim() || isSendingMessage) {
+    const message = chatInput.value.trim();
+
+    if (!message) {
         return;
     }
 
@@ -217,3 +244,17 @@ chatSuggestions.forEach(button => {
         sendChatMessage(button.dataset.prompt);
     });
 });
+
+function guardarSesion(data) {
+    if (!data || !data.token) {
+        return false;
+    }
+
+    localStorage.setItem(TOKEN_KEY, data.token);
+
+    return true;
+}
+
+function cerrarSesion() {
+    localStorage.removeItem(TOKEN_KEY);
+}
